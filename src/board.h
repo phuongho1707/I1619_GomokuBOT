@@ -8,7 +8,7 @@
 #include <vector>
 
 /* BLACK is the one who plays first. */
-enum SIDE
+enum CVAL
 {
     EMPTY = 0,
     BLACK = 67,
@@ -68,9 +68,9 @@ public:
     /* Play a move.
        This will NOT check for illegal moves. The GUI should do this instead.
     */
-    void move (cell w, SIDE side)
+    void move (cell w, CVAL color)
     {
-        b[w.x][w.y] = side;
+        b[w.x][w.y] = color;
         last = w;
     }
 
