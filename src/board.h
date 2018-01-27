@@ -166,28 +166,16 @@ public:
     }
 
     /* Check if gomoku_board p exists in *this.
-       Specifically, only if any subboard with b's size exists in *this, the function returns the subboard.
-       The returned subboard may differ from the given board in direction because it is the direction of
-       the subboard that was firstly found in the board.
-       If the function cannot find your given board, it returns an empty board.
+       Specifically, only if any subboard with b's size exists in *this, the function returns true.
+       If the function cannot find your given board, false will be returned.
     */
-    gomoku_board exist (gomoku_board p)
+    bool exist (gomoku_board p)
     {
         for (size_t i = 0; i <= (lastcell().x - p.lastcell().x); ++i)
             for (size_t j = 0; j <= (lastcell().y - p.lastcell().y); ++j)
-                for (int k = 0; k < 4; ++k)
-                {
-                    if (subboard(cell(i, j), p.lastcell().x + 1, p.lastcell().y + 1) == p)
-                    {
-                        for (size_t u = 0; u <= p.lastcell().x; ++u)
-                            for (size_t v = 0; v <= (j + p.lastcell().y); ++v)
-                                if (p[u][v] == WEVER)
-                                    p[u][v] = b[u + i][v + j];
-                        return p;
-                    }
-                    p.rotate();
-                }
-        return gomoku_board(0, 0);
+                if (subboard(cell(i, j), p.lastcell().x + 1, p.lastcell().y + 1) == p)
+                    return 1;
+        return 0;
     }
 
     /* Replace a subboard (that was firstly found in the board) with a board of the same size.
