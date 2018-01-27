@@ -11,9 +11,9 @@
 enum SIDE
 {
     EMPTY = 0,
-    BLACK = 1,
-    WHITE = 2,
-    WEVER = 3
+    BLACK = 67,
+    WHITE = 63,
+    WEVER = 155
 };
 
 /* Board's cell. */
@@ -46,7 +46,16 @@ public:
     gomoku_board (size_t h = 15, size_t v = 15): b(std::vector<std::vector<uint8_t>>(h, std::vector<uint8_t>(v, EMPTY))) {}
 
     /* Construct a board using std::vector<std::vector<uint8_t>>. */
-    gomoku_board (std::vector<std::vector<uint8_t>> _b): b(_b) {}
+    gomoku_board (std::vector<std::vector<uint8_t>> _b): b(_b)
+    {
+        size_t msize = 0;
+        for (size_t i = 0; i < b.size(); ++i)
+            if (b[i].size() > msize)
+                msize = b[i].size();
+        for (size_t i = 0; i < b.size(); ++i)
+            while (b[i].size() < msize)
+                b[i].push_back(EMPTY);
+    }
 
     /* Clear the board. */
     void clear ()
@@ -93,6 +102,12 @@ public:
         if (b.empty())
             return cell(INT_MAX, INT_MAX);
         return cell ((int)b.size() - 1, (int)b[0].size() - 1);
+    }
+
+    /* Is the board empty or not? */
+    bool empty ()
+    {
+        return b.empty();
     }
 
     /* Get subboard.
@@ -150,22 +165,71 @@ public:
         *this = p;
     }
 
-    /* Check if gomoku_board b exists in *this.
-       Specifically, only if any subboard with b's size exists in *this, the function returns true.
+    /* Check if gomoku_board p exists in *this.
+       Specifically, only if any subboard with b's size exists in *this, the function returns the subboard.
+       The returned subboard may differ from the given board in direction because it is the direction of
+       the subboard that was firstly found in the board.
+       If the function cannot find your given board, it returns an empty board.
     */
-    bool exist (gomoku_board p)
+    gomoku_board exist (gomoku_board p)
     {
-        for (size_t i = 0; i <= (lastcell().x - p.lastcell().x + 1); ++i)
-            for (size_t j = 0; j <= (lastcell().y - p.lastcell().y + 1); ++j)
-                // Check all 4 directions.
+        for (size_t i = 0; i <= (lastcell().x - p.lastcell().x); ++i)
+            for (size_t j = 0; j <= (lastcell().y - p.lastcell().y); ++j)
                 for (int k = 0; k < 4; ++k)
                 {
                     if (subboard(cell(i, j), p.lastcell().x + 1, p.lastcell().y + 1) == p)
-                        return 1;
+                    {
+                        for (size_t u = 0; u <= p.lastcell().x; ++u)
+                            for (size_t v = 0; v <= (j + p.lastcell().y); ++v)
+                                if (p[u][v] == WEVER)
+                                    p[u][v] = b[u + i][v + j];
+                        return p;
+                    }
                     p.rotate();
                 }
-        return 0;
+        return gomoku_board(0, 0);
+    }
+
+    /* Replace a subboard (that was firstly found in the board) with a board of the same size.
+       This function will NOT do anything if the given subboard does not exist in the board.
+       This function will NOT do anything if the sizes are different.
+       This function will NOT rotate to find the board in all 4 directions.
+    */
+    void replace (gomoku_board p1, gomoku_board p2)
+    {
+        if (p1.lastcell() != p2.lastcell())
+            return;
+        cell pos;
+        bool cont = 1;
+        for (size_t i = 0; i <= (lastcell().x - p1.lastcell().x) && cont; ++i)
+            for (size_t j = 0; j <= (lastcell().y - p1.lastcell().y) && cont; ++j)
+                if (subboard(cell(i, j), p1.lastcell().x + 1, p1.lastcell().y + 1) == p1)
+                {
+                    pos = cell(i, j);
+                    cont = 0;
+                    break;
+                }
+        if (cont)
+            return;
+        for (size_t i = pos.x; i <= (pos.x + p1.lastcell().x); ++i)
+            for (size_t j = pos.y; j <= (pos.y + p1.lastcell().y); ++j)
+                b[i][j] = p2[i - pos.x][j - pos.y];
+    }
+
+    /* Get a std::vector of cells that are different between the 2 boards.
+       If the 2 boards are different in size, the function returns an empty std::vector.
+    */
+    std::vector<cell> diff (gomoku_board p)
+    {
+        if (lastcell() != p.lastcell())
+            return std::vector<cell>();
+        std::vector<cell> rep;
+        for (size_t i = 0; i <= lastcell().x; ++i)
+            for (size_t j = 0; j <= lastcell().y; ++j)
+                if (b[i][j] != p[i][j] && b[i][j] != WEVER && p[i][j] != WEVER)
+                    rep.push_back(cell(i, j));
+        return rep;
     }
 };
 
-#endif /* __GOMOKU_BOARD__ */
+#endif /* __GOMOKU_BOARD_H__ */
